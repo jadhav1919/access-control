@@ -1,4 +1,4 @@
-# Access Control
+  # Access Control
 
 ## What is Access Control?
 
@@ -514,3 +514,284 @@ Sensitive paths are disclosed to attackers.
 
 ![Lab 01](Screenshots/lab1s.png)
 ---
+
+# Security by Obscurity
+
+## What is Security by Obscurity?
+
+Security by Obscurity means trying to protect sensitive functionality by hiding it instead of properly restricting access.
+
+The developer assumes:
+
+"If attackers cannot find the page, they cannot access it."
+
+This is **not a secure solution** because hidden pages can still be discovered.
+
+## Example
+
+Instead of using:
+
+```text
+https://website.com/admin
+```
+
+The developer changes it to:
+
+```text
+https://website.com/administrator-panel-yb556
+```
+
+The URL is harder to guess.
+
+The developer believes this makes the admin panel secure.
+
+## Why is this Insecure?
+
+Hiding a URL does not actually prevent access.
+
+If an attacker discovers the URL, they can still try to access it.
+
+A secure application should verify:
+
+* Is the user logged in?
+* Is the user an administrator?
+* Does the user have permission?
+
+Simply hiding the URL is not enough.
+
+## How Can Attackers Discover Hidden URLs?
+
+### 1. JavaScript Files
+
+Sometimes developers store sensitive URLs inside JavaScript code.
+
+Example:
+
+```javascript
+var isAdmin = false;
+
+if (isAdmin) {
+    var adminPanelTag = document.createElement('a');
+    adminPanelTag.setAttribute(
+        'href',
+        'https://website.com/administrator-panel-yb556'
+    );
+}
+```
+
+Even though the admin link is not displayed to normal users, the JavaScript file is still downloaded by everyone.
+
+An attacker can:
+
+1. Open Developer Tools (F12)
+2. View the JavaScript code
+3. Find the hidden admin URL
+4. Try accessing it directly
+
+### 2. Source Code Inspection
+
+Attackers often inspect:
+
+* HTML source code
+* JavaScript files
+* API responses
+
+These may reveal hidden endpoints.
+
+### 3. robots.txt
+
+Developers sometimes accidentally expose sensitive paths.
+
+Example:
+
+```text
+User-agent: *
+Disallow: /administrator-panel-yb556
+```
+
+An attacker can simply read robots.txt and discover the hidden page.
+
+### 4. Brute Force and Wordlists
+
+Attackers use automated tools to test thousands of possible URLs.
+
+Examples:
+
+```text
+/admin
+/admin-panel
+/administrator
+/control-panel
+/dashboard
+```
+
+This process is called directory or content discovery.
+
+## Real Security vs Security by Obscurity
+
+### Bad Security
+
+```text
+Hide the admin URL
+```
+
+### Good Security
+
+```text
+Check whether the user is an administrator
+before allowing access.
+```
+
+Even if the attacker knows the URL, access should still be denied.
+
+![Lab 01](Screenshots/lab2a.png)
+
+# Information Disclosure in Source Code
+
+## Step 1: Open the Lab Home Page
+
+1. Navigate to the lab home page.
+2. View the page source.
+
+### Option 1: Browser
+
+Right-click the page and select:
+
+```text
+View Page Source
+```
+
+### Option 2: Burp Suite
+
+Go to:
+
+```text
+Proxy > HTTP History
+```
+
+and inspect the response.
+
+---
+
+## Step 2: Inspect the HTML/JavaScript
+
+Search for:
+
+```html
+<script>
+```
+
+or look through linked JavaScript files.
+
+You will find code similar to:
+
+```javascript
+var isAdmin = false;
+var adminPanelTag = '/administrator-panel-y5g6j3';
+```
+
+or
+
+```javascript
+/admin-panel
+```
+
+Notice:
+
+```text
+The admin panel URL is disclosed in the source code.
+```
+
+---
+
+## Step 3: Access the Admin Panel
+
+Copy the disclosed path.
+
+Example:
+
+```text
+/administrator-panel-y5g6j3
+```
+
+Append it to the lab URL:
+
+```text
+https://LAB-ID.web-security-academy.net/administrator-panel-y5g6j3
+```
+
+---
+![Lab 01](Screenshots/lab2sc.png)
+
+## Step 4: Open the Admin Interface
+
+The administrator panel loads successfully.
+
+Example:
+
+```text
+Admin Panel
+ ├─ Users
+ ├─ Delete User
+ └─ Administrative Functions
+```
+
+---
+
+## Step 5: Delete Carlos
+
+1. Locate:
+
+```text
+carlos
+```
+
+2. Click:
+
+```text
+Delete
+```
+
+or use the delete link associated with Carlos.
+
+---
+
+## Step 6: Lab Solved
+
+After deleting:
+
+```text
+carlos
+```
+
+the lab is solved.
+
+---
+
+# Vulnerability Explanation
+
+Sensitive functionality should not be hidden only in:
+
+```text
+HTML source code
+```
+
+or
+
+```text
+JavaScript files
+```
+
+because anyone can view them.
+
+In this lab:
+
+```text
+Admin panel URL
+```
+
+was exposed inside client-side code, allowing direct access.
+
+---
+![Lab 01](Screenshots/lab2s.png)
+
