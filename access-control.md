@@ -793,5 +793,425 @@ Admin panel URL
 was exposed inside client-side code, allowing direct access.
 
 ---
+
 ![Lab 01](Screenshots/lab2s.png)
+
+
+# Parameter-Based Access Control
+
+## What is Parameter-Based Access Control?
+
+Some websites store a user's role or permissions in data that the user can modify.
+
+This data may be stored in:
+
+* URL parameters
+* Cookies
+* Hidden form fields
+
+The application then trusts this data to decide whether the user is an administrator or a normal user.
+
+This is insecure because users can change the values themselves.
+
+## Simple Example
+
+Imagine a website stores your role in the URL:
+
+```text
+https://website.com/home?admin=false
+```
+
+When the website sees:
+
+```text
+admin=false
+```
+
+it treats you as a normal user.
+
+### What Can an Attacker Do?
+
+The attacker changes:
+
+```text
+admin=false
+```
+
+to:
+
+```text
+admin=true
+```
+
+Result:
+
+```text
+https://website.com/home?admin=true
+```
+
+If the application trusts this value, the attacker gains administrator privileges.
+
+This is a Broken Access Control vulnerability.
+
+
+## Another Example
+
+The website stores roles using numbers.
+
+```text
+https://website.com/home?role=0
+```
+
+Where:
+
+| Role Value | Meaning     |
+| ---------- | ----------- |
+| 0          | Normal User |
+| 1          | Admin       |
+
+An attacker changes:
+
+```text
+role=0
+```
+
+to:
+
+```text
+role=1
+```
+
+Result:
+
+```text
+https://website.com/home?role=1
+```
+
+The website may incorrectly grant admin access.
+
+
+## Hidden Field Example
+
+Sometimes websites hide role information inside HTML forms.
+
+```html
+<input type="hidden" name="role" value="user">
+```
+
+The developer thinks users cannot see it because it is hidden.
+
+This is wrong.
+
+Attackers can:
+
+1. Open Developer Tools (F12)
+2. View the hidden field
+3. Change:
+
+```html
+value="user"
+```
+
+to:
+
+```html
+value="admin"
+```
+
+4. Submit the form
+
+If the application trusts this value, the attacker becomes an admin.
+
+
+## Cookie Example
+
+Some websites store roles in cookies.
+
+Example:
+
+```text
+role=user
+```
+
+An attacker can edit the cookie to:
+
+```text
+role=admin
+```
+
+If the server trusts the cookie, admin access is granted.
+
+## Why is this Vulnerable?
+
+The problem is:
+
+```text
+The user controls the value.
+```
+
+Anything controlled by the user can be modified.
+
+Never trust:
+
+* URL parameters
+* Hidden fields
+* Cookies
+
+for access control decisions.
+
+## Secure Approach
+
+Instead of trusting user-supplied values:
+
+ Store roles on the server
+
+Example:
+
+```text
+User ID 101 → User
+User ID 102 → Admin
+```
+
+When a request arrives:
+
+1. Check the session
+2. Identify the user
+3. Check the role in the server database
+4. Grant or deny access
+
+The user should never be able to decide their own role.
+
+## Attack Flow
+
+### Vulnerable Application
+
+```text
+User Login
+     ↓
+Role stored in URL/Cookie
+     ↓
+User modifies value
+     ↓
+Application trusts value
+     ↓
+Admin Access Granted
+```
+
+### Secure Application
+
+```text
+User Login
+     ↓
+Session Created
+     ↓
+Server Checks Database
+     ↓
+Role Verified
+     ↓
+Access Granted or Denied
+```
+
+---
+
+![Lab 01](Screenshots/lab3a.png)
+
+# Unprotected Admin Functionality with Insecure Cookie
+
+## Step 1: Access the Admin Panel
+
+1. Browse to:
+
+```text
+/admin
+```
+
+2. Observe the response:
+
+```text
+Access denied
+```
+
+or
+
+```text
+Unauthorized
+```
+
+You cannot access the admin panel as a normal user.
+
+
+## Step 2: Open the Login Page
+
+1. Navigate to:
+
+```text
+/login
+```
+
+2. Enter valid credentials.
+
+Example:
+
+```text
+Username: wiener
+Password: peter
+```
+
+
+## Step 3: Enable Response Interception
+
+In Burp Suite:
+
+1. Go to:
+
+```text
+Proxy > Options
+```
+
+2. Enable:
+
+```text
+Intercept Server Responses
+```
+
+3. Turn interception on.
+
+
+## Step 4: Submit the Login Request
+
+1. Submit the login form.
+2. Forward the login request.
+
+Burp will intercept the server response.
+
+
+## Step 5: Modify the Cookie
+
+Observe the response header:
+
+```http
+Set-Cookie: Admin=false
+```
+
+Change it to:
+
+```http
+Set-Cookie: Admin=true
+```
+
+Modified response:
+
+```http
+HTTP/2 302 Found
+
+Set-Cookie: Admin=true
+```
+
+
+## Step 6: Forward the Response
+
+1. Click:
+
+```text
+Forward
+```
+
+2. Allow the browser to receive the modified cookie.
+
+
+## Step 7: Access the Admin Panel
+
+Browse to:
+
+```text
+/admin
+```
+
+The admin panel now loads successfully.
+
+
+## Step 8: Delete Carlos
+
+1. Locate user:
+
+```text
+carlos
+```
+
+2. Click:
+
+```text
+Delete
+```
+
+or use the delete link.
+
+Example:
+
+```text
+Delete Carlos
+```
+
+
+## Step 9: Lab Solved
+
+After deleting:
+
+```text
+carlos
+```
+
+the lab is solved.
+
+# Vulnerability Explanation
+
+The application trusts a client-side cookie:
+
+```http
+Admin=false
+```
+
+to determine administrative privileges.
+
+An attacker can simply modify:
+
+```http
+Admin=false
+```
+
+to:
+
+```http
+Admin=true
+```
+
+and gain administrator access.
+
+
+## Normal Flow
+
+```text
+User Login
+      ↓
+Admin=false
+      ↓
+No Admin Access
+```
+
+
+## Exploited Flow
+
+```text
+User Login
+      ↓
+Admin=true
+      ↓
+Admin Panel Access
+      ↓
+Delete User
+```
+
+---
+
+
 
