@@ -1353,3 +1353,232 @@ carlos
 the lab is solved.
 ![Lab 01](Screenshots/lab4s.png)
 ---
+
+# Broken Access Control Due to Platform Misconfiguration
+
+## What is Platform Misconfiguration?
+
+A platform misconfiguration occurs when access control rules are configured incorrectly.
+
+The developer creates security rules, but because of a mistake in the server or framework configuration, attackers can bypass those rules.
+
+As a result, users may gain access to functionality they should not be allowed to use.
+
+
+## Normal Access Control
+
+Imagine an admin-only function:
+
+```text
+/admin/deleteUser
+```
+
+The developer creates a rule:
+
+```text
+Managers cannot access:
+/admin/deleteUser
+```
+
+When a manager tries to access it:
+
+```text
+/admin/deleteUser
+```
+
+Access is denied.
+
+Everything works correctly.
+
+
+## The Problem
+
+Some web frameworks support special HTTP headers such as:
+
+```text
+X-Original-URL
+X-Rewrite-URL
+```
+
+These headers can tell the server:
+
+```text
+"Actually process a different URL."
+```
+
+If the application checks one URL but processes another URL, access control can fail.
+
+
+## Simple Analogy
+
+Imagine a building.
+
+Front Door Security Guard:
+
+```text
+Checks Room Number 101
+```
+
+Secret Internal Door:
+
+```text
+Actually takes you to Room 999
+```
+
+The guard only checks the first room number.
+
+You end up somewhere else.
+
+This is exactly what happens with URL rewriting.
+
+
+## Example Attack
+
+Protected URL:
+
+```text
+/admin/deleteUser
+```
+
+Normal request:
+
+```http
+POST /admin/deleteUser
+```
+
+Server blocks it.
+
+
+### Bypass Attempt
+
+Attacker sends:
+
+```http
+POST /
+X-Original-URL: /admin/deleteUser
+```
+
+What happens?
+
+#### Security Check
+
+The application sees:
+
+```text
+/
+```
+
+and thinks:
+
+```text
+"This request is harmless."
+```
+
+#### Server Processing
+
+The framework reads:
+
+```text
+X-Original-URL: /admin/deleteUser
+```
+
+and internally changes the request to:
+
+```text
+/admin/deleteUser
+```
+
+The protected function executes.
+
+The attacker bypasses access control.
+
+
+## Why Does This Happen?
+
+The access control system checks:
+
+```text
+/
+```
+
+But the server processes:
+
+```text
+/admin/deleteUser
+```
+
+Two different components are looking at two different URLs.
+
+This mismatch creates a vulnerability.
+
+
+## Visual Flow
+
+### Secure System
+
+```text
+Request
+   ↓
+Access Control Check
+   ↓
+Same URL Processed
+   ↓
+Access Granted or Denied
+```
+
+### Vulnerable System
+
+```text
+Request
+   ↓
+Access Control Checks "/"
+   ↓
+Framework Changes URL
+   ↓
+Processes "/admin/deleteUser"
+   ↓
+Protected Function Runs
+```
+
+
+## Common Headers Used
+
+Attackers often test:
+
+```text
+X-Original-URL
+```
+
+```text
+X-Rewrite-URL
+```
+
+These headers are sometimes supported by:
+
+* Reverse proxies
+* IIS
+* Apache modules
+* Web frameworks
+
+
+## Why Is This Dangerous?
+
+An attacker may:
+
+* Access admin pages
+* Delete users
+* Modify data
+* Perform privileged actions
+
+without having administrator permissions.
+
+This becomes a form of:
+
+```text
+Vertical Privilege Escalation
+```
+
+because a low-privileged user gains higher privileges.
+
+---
+
