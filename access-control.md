@@ -1582,7 +1582,7 @@ because a low-privileged user gains higher privileges.
 
 ---
 
-![Lab 01](Screenshots/lab5a.png)
+![Lab 01](Screenshots/lsb5a.png)
 
 # Access Control Bypass via X-Original-URL Header
 
@@ -1725,6 +1725,6 @@ carlos
 ```
 
 the lab is solved.
-
+![Lab 01](Screenshots/lab5s.png)
 ---
 
