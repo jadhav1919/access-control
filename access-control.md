@@ -1728,3 +1728,248 @@ the lab is solved.
 ![Lab 01](Screenshots/lab5s.png)
 ---
 
+# HTTP Method-Based Access Control Bypass
+
+## What is an HTTP Method?
+
+When a browser communicates with a server, it uses HTTP methods.
+
+Common methods are:
+
+| Method | Purpose       |
+| ------ | ------------- |
+| GET    | Retrieve data |
+| POST   | Send data     |
+| PUT    | Update data   |
+| DELETE | Delete data   |
+
+### Example
+
+View profile:
+
+```http
+GET /profile
+```
+
+Delete user:
+
+```http
+POST /admin/deleteUser
+```
+ 
+
+# The Problem
+
+Sometimes developers only protect one HTTP method.
+
+Example:
+
+```text
+POST /admin/deleteUser
+```
+
+Access Control Rule:
+
+```text
+Only administrators can use POST requests.
+```
+
+The developer assumes the page is secure.
+
+  
+
+# Vulnerable Situation
+
+The server blocks:
+
+```http
+POST /admin/deleteUser
+```
+
+But accidentally allows:
+
+```http
+GET /admin/deleteUser
+```
+
+or
+
+```http
+GET /admin/deleteUser?user=carlos
+```
+
+The attacker simply changes the HTTP method.
+
+The same action is performed even though access control was supposed to block it.
+
+ 
+
+# Simple Example
+
+Imagine a security guard says:
+
+```text
+Nobody can enter using the front door.
+```
+
+But forgets to secure:
+
+```text
+The back door.
+```
+
+The attacker simply uses the back door.
+
+The same thing happens with HTTP methods.
+
+ 
+
+# Normal Flow
+
+Admin sends:
+
+```http
+POST /admin/deleteUser
+```
+
+Server:
+
+```text
+Delete User
+```
+
+ 
+
+# Attacker Attempt
+
+Attacker sends:
+
+```http
+GET /admin/deleteUser
+```
+
+If the application accepts GET requests for the same action:
+
+```text
+User Deleted
+```
+
+Access control is bypassed.
+
+ 
+
+# Visual Flow
+
+## Secure Application
+
+```text
+POST /admin/deleteUser
+       ↓
+Check User Role
+       ↓
+Admin?
+       ↓
+Yes → Allow
+No  → Deny
+```
+
+ 
+
+## Vulnerable Application
+
+```text
+POST /admin/deleteUser
+       ↓
+Blocked
+
+GET /admin/deleteUser
+       ↓
+No Security Check
+       ↓
+Action Executed
+```
+
+ 
+
+# Why Does This Happen?
+
+Developers often protect:
+
+```text
+POST requests
+```
+
+but forget to protect:
+
+```text
+GET requests
+PUT requests
+DELETE requests
+```
+
+As a result, attackers try different HTTP methods.
+
+ 
+
+# Common Testing Technique
+
+When performing access control testing:
+
+If:
+
+```http
+POST /admin/deleteUser
+```
+
+returns:
+
+```text
+403 Forbidden
+```
+
+Try:
+
+```http
+GET /admin/deleteUser
+```
+
+or
+
+```http
+PUT /admin/deleteUser
+```
+
+or
+
+```http
+DELETE /admin/deleteUser
+```
+
+Sometimes one of these methods bypasses the restriction.
+
+ 
+
+# Why is This Dangerous?
+
+An attacker may:
+
+* Delete users
+* Modify accounts
+* Access admin functionality
+* Change application data
+
+without having administrator permissions.
+
+This leads to:
+
+```text
+Vertical Privilege Escalation
+```
+
+because a low-privileged user performs high-privileged actions.
+
+---
+
+![Lab 01](Screenshots/lab6a.png)
+
+
